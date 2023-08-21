@@ -2,7 +2,7 @@
 #include <Adafruit_NeoPixel.h>
 #include "BluetoothSerial.h"
 #include <EngineController.h>
-#include <AnalogSensor.h>
+#include <AnalogSensor.h> //libreria para sensores analogicos( sensores tatami)
 #include <DistanceSensors.h>
 #include <Button.h>
 
@@ -41,7 +41,7 @@ int leftTatamiRead;
 //Variables y constantes para los sensores de distancia
 #define PIN_SENSOR_DISTANCIA_DERECHO 27
 #define PIN_SENSOR_DISTANCIA_IZQUIERDO 35
-#define RIVAL 35
+#define RIVAL 60
 int distSharpRigh;
 int distSharpLeft;
 
@@ -87,8 +87,8 @@ EngineController *Ryo = new EngineController(rightEngine, leftEngine);
 AnalogSensor *rightTatami = new AnalogSensor(PIN_SENSOR_TATAMI_DER);
 AnalogSensor *LeftTatami = new AnalogSensor(PIN_SENSOR_TATAMI_IZQ);
 
-Isensor *sharpRight = new Sharp_GP2Y0A60S(PIN_SENSOR_DISTANCIA_DERECHO);
-Isensor *sharpLeft = new Sharp_GP2Y0A60S(PIN_SENSOR_DISTANCIA_IZQUIERDO);
+Isensor *sharpRight = new Sharp_GP2Y0A02(PIN_SENSOR_DISTANCIA_DERECHO);
+Isensor *sharpLeft = new Sharp_GP2Y0A02(PIN_SENSOR_DISTANCIA_IZQUIERDO);
 
 Button *start = new  Button(PIN_BUTTON);
 
@@ -126,7 +126,7 @@ void sensorsReading()
     distSharpRigh = sharpRight->SensorRead();
     distSharpLeft = sharpLeft->SensorRead();
     righTatamiRead = rightTatami->SensorRead();
-    leftTatamiRead = LeftTatami->SensorRead();
+    //leftTatamiRead = LeftTatami->SensorRead();
   }
 //<------------------------------------------------------------------------------------------------------------->//
 //Con el enum reemplazamos los casos de la maquina de estado por palabras descriptivas para mejor interpretacion del codigo
@@ -167,7 +167,7 @@ void Passive()
       leds.clear();
       leds.show();
       Ryo->Stop();
-      delay(5000);
+      delay(4900);
       Ryo->Right(ATTACK_SPEED, ATTACK_SPEED);
       delay(tickTurn);
       passive = SEARCH_PASSIVE;

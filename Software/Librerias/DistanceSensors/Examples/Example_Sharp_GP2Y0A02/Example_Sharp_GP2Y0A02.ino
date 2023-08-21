@@ -1,6 +1,6 @@
 #include <DistanceSensors.h>
 
-#define SENSOR_PIN 13
+#define SENSOR_PIN 25
 double distance;
 
 unsigned long currentTime = 0;
