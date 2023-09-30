@@ -1,5 +1,4 @@
 //librerias
-#include <Adafruit_NeoPixel.h>
 #include "BluetoothSerial.h"
 #include <EngineController.h>
 #include <AnalogSensor.h> //libreria para sensores analogicos( sensores tatami)
@@ -27,13 +26,10 @@ unsigned long currentTimeLdr = 0;
 #endif
 BluetoothSerial SerialBT;
 
-//Aro de led
-#define PIN_LEDS 17
-#define NUM_LEDS 8
 
 //Variables y constantes para los sensores de tatami
-#define PIN_SENSOR_TATAMI_IZQ 34
-#define PIN_SENSOR_TATAMI_DER 13
+#define PIN_SENSOR_TATAMI_IZQ 35
+#define PIN_SENSOR_TATAMI_DER 32
 int righTatamiRead;
 int leftTatamiRead;
 #define BORDE_TATAMI 300
@@ -41,22 +37,22 @@ int leftTatamiRead;
 //Variables y constantes para los sensores de distancia
 #define PIN_SENSOR_DISTANCIA_DERECHO 27
 #define PIN_SENSOR_DISTANCIA_IZQUIERDO 35
-#define RIVAL 60
+#define RIVAL 40
 int distSharpRigh;
 int distSharpLeft;
 
 // Variables y constantes para los motores
-#define PIN_RIGHT_ENGINE_IN1 21
-#define PIN_RIGHT_ENGINE_IN2 19
-#define PIN_LEFT_ENGINE_IN1 22
-#define PIN_LEFT_ENGINE_IN2 23
+#define PIN_RIGHT_ENGINE_IN1 26
+#define PIN_RIGHT_ENGINE_IN2 17
+#define PIN_LEFT_ENGINE_IN1 17
+#define PIN_LEFT_ENGINE_IN2 16
 #define PWM_CHANNEL_RIGHT_IN1 1
 #define PWM_CHANNEL_RIGHT_IN2 2
 #define PWM_CHANNEL_LEFT_IN1 3
 #define PWM_CHANNEL_LEFT_IN2 4
 #define SEARCH_SPEED 65// 12 volt 170
 #define ATTACK_SPEED_LDR 255// 12 volt 255
-#define ATTACK_SPEED 180// 12 volt 220
+#define ATTACK_SPEED 200// 12 volt 220
 #define STRONG_ATTACK_SPEED 210
 #define ATTACK_SPEED_AGGRESSIVE 240// 12 volt 235
 #define AVERAGE_SPEED 100// 12 volt 200
@@ -73,12 +69,12 @@ int tickTurn;
 
 
 //Pines para los botones y buzzer
-#define PIN_BUTTON 18
+#define PIN_BUTTON 23
 bool lec;
 bool flank;
 unsigned long currentTimeButton = 0;
 #define TICK_START 1000
-#define BUZZER 16
+#define BUZZER 18
 //<------------------------------------------------------------------------------------------------------------->//
 IEngine *rightEngine = new Driver_DRV8825(PIN_RIGHT_ENGINE_IN1, PIN_RIGHT_ENGINE_IN2, PWM_CHANNEL_RIGHT_IN1, PWM_CHANNEL_RIGHT_IN2);
 IEngine *leftEngine = new Driver_DRV8825(PIN_LEFT_ENGINE_IN1, PIN_LEFT_ENGINE_IN2, PWM_CHANNEL_LEFT_IN1, PWM_CHANNEL_LEFT_IN2);
