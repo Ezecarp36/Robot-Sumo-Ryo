@@ -3,7 +3,10 @@
 #include <EngineController.h>
 #include <AnalogSensor.h> //libreria para sensores analogicos( sensores tatami)
 #include <DistanceSensors.h>
-#include <Button.h>
+#include <Button_pullup.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 //debug
 #define DEBUG_SHARP 0
@@ -26,6 +29,9 @@ unsigned long currentTimeLdr = 0;
 #endif
 BluetoothSerial SerialBT;
 
+//Oled
+#define SCREEN_WIDTH 128 // OLED width,  in pixels
+#define SCREEN_HEIGHT 64 // OLED height, in pixels
 
 //Variables y constantes para los sensores de tatami
 #define PIN_SENSOR_TATAMI_IZQ 35
@@ -33,6 +39,11 @@ BluetoothSerial SerialBT;
 int righTatamiRead;
 int leftTatamiRead;
 #define BORDE_TATAMI 300
+
+//Variables y constantes LDR
+#define PIN_SENSOR_LDR 23
+#define MONTADO 100
+int ldr;
 
 //Variables y constantes para los sensores de distancia
 #define PIN_SENSOR_DISTANCIA_DERECHO 27
@@ -76,6 +87,8 @@ unsigned long currentTimeButton = 0;
 #define TICK_START 1000
 #define BUZZER 18
 //<------------------------------------------------------------------------------------------------------------->//
+Adafruit_SSD1306 oled(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
 IEngine *rightEngine = new Driver_DRV8825(PIN_RIGHT_ENGINE_IN1, PIN_RIGHT_ENGINE_IN2, PWM_CHANNEL_RIGHT_IN1, PWM_CHANNEL_RIGHT_IN2);
 IEngine *leftEngine = new Driver_DRV8825(PIN_LEFT_ENGINE_IN1, PIN_LEFT_ENGINE_IN2, PWM_CHANNEL_LEFT_IN1, PWM_CHANNEL_LEFT_IN2);
 EngineController *Ryo = new EngineController(rightEngine, leftEngine);
@@ -86,7 +99,9 @@ AnalogSensor *LeftTatami = new AnalogSensor(PIN_SENSOR_TATAMI_IZQ);
 Isensor *sharpRight = new Sharp_GP2Y0A02(PIN_SENSOR_DISTANCIA_DERECHO);
 Isensor *sharpLeft = new Sharp_GP2Y0A02(PIN_SENSOR_DISTANCIA_IZQUIERDO);
 
-Button *start = new  Button(PIN_BUTTON);
+Button_pullup *start = new  Button(PIN_BUTTON);
+
+AnalogSensor *ldrSensor = new AnalogSensor(PIN_SENSOR_LDR);
 
 Adafruit_NeoPixel leds(NUM_LEDS, PIN_LEDS, NEO_RGB + NEO_KHZ800);
 //<------------------------------------------------------------------------------------------------------------->//
@@ -102,6 +117,18 @@ void printSharp()
     SerialBT.println(distSharpLeft);
   }
 }
+
+//Funciones para imprimir las lecturas de los sensores por el serial Bluetooth
+void printLdr()
+{
+  if (millis() > currentTimeLdr + TICK_DEBUG_LDR)
+  {
+    currentTimeLdr = millis();
+    SerialBT.print("Ldr: ");
+    SerialBT.println(ldr);
+  }
+}
+
 //Funcion para imprimir la lectura de los sensores de tatami en el puerto Bluetooth
 void printTatami()
 {
@@ -122,7 +149,8 @@ void sensorsReading()
     distSharpRigh = sharpRight->SensorRead();
     distSharpLeft = sharpLeft->SensorRead();
     righTatamiRead = rightTatami->SensorRead();
-    //leftTatamiRead = LeftTatami->SensorRead();
+    leftTatamiRead = LeftTatami->SensorRead();
+    ldr = ldrSensor->SensorRead();
   }
 //<------------------------------------------------------------------------------------------------------------->//
 //Con el enum reemplazamos los casos de la maquina de estado por palabras descriptivas para mejor interpretacion del codigo
@@ -154,7 +182,7 @@ void Passive()
   {
     case STANDBY_PASSIVE:
     {
-    leds.clear();
+    oled.clearDisplay(); 
     leds.setPixelColor(1, leds.Color(150,150,150));
     leds.show();
     Ryo->Stop();
