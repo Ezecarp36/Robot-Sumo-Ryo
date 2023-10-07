@@ -19,15 +19,15 @@ void setup()
 
 void loop()
 {
-    robot->Forward(speed);
+    Ryo->Forward(speed);
     delay(3000);
-    robot->Backward(speed);
+    Ryo->Backward(speed);
     delay(3000);
-    robot->Left(speed);
+    Ryo->Left(speed);
     delay(3000);
-    robot->Right(speed);
+    Ryo->Right(speed);
     delay(3000);
-    robot->Stop();
+    Ryo->Stop();
     delay(3000);
   
 }

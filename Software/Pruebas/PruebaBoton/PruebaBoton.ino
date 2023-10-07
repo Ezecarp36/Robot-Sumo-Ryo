@@ -1,7 +1,7 @@
-#include <Button.h>
+#include <boton.h>
 #include "BluetoothSerial.h"
 
-#define PIN_BUTTON 23
+#define PIN_BOTON 18
 unsigned long currentTimeButton = 0;
 #define TICK_START 1000
 
@@ -9,7 +9,7 @@ unsigned long currentTimeButton = 0;
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
 BluetoothSerial SerialBT;
-Button *start = new  Button(PIN_BUTTON);
+Boton *start = new Boton(PIN_BOTON);
 
 void setup() 
 {

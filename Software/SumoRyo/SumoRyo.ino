@@ -1,23 +1,20 @@
 //librerias
+#include <Adafruit_NeoPixel.h>
 #include "BluetoothSerial.h"
 #include <EngineController.h>
-#include <AnalogSensor.h> //libreria para sensores analogicos( sensores tatami)
+#include <AnalogSensor.h>
 #include <DistanceSensors.h>
-#include <Button_pullup.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <boton.h>
 
 //debug
-#define DEBUG_SHARP 0
-#define DEBUG_TATAMI 0
-#define DEBUG_STATE 0
-#define DEBUG_LDR 0
-#define TICK_DEBUG 500
-#define TICK_DEBUG_STRATEGY 500
-#define TICK_DEBUG_SHARP 500
-#define TICK_DEBUG_TATAMI 500
+#define DEBUG_SHARP 1
+#define DEBUG_STATE 1
+#define DEBUG_LDR 1
+#define DEBUG_TATAMI 1
 #define TICK_DEBUG_LDR 1000
+#define TICK_DEBUG_STRATEGY 1000
+#define TICK_DEBUG_TATAMI 1000
+#define TICK_DEBUG_SHARP 1000
 unsigned long currentTimeSharp = 0;
 unsigned long currentTimeTatami = 0;
 unsigned long currentTimeEstrategy = 0;
@@ -29,41 +26,43 @@ unsigned long currentTimeLdr = 0;
 #endif
 BluetoothSerial SerialBT;
 
-//Oled
-#define SCREEN_WIDTH 128 // OLED width,  in pixels
-#define SCREEN_HEIGHT 64 // OLED height, in pixels
+//Aro de led
+#define PIN_LEDS 17
+#define NUM_LEDS 8
 
 //Variables y constantes para los sensores de tatami
-#define PIN_SENSOR_TATAMI_IZQ 35
-#define PIN_SENSOR_TATAMI_DER 32
+#define PIN_SENSOR_TATAMI_IZQ 34
+#define PIN_SENSOR_TATAMI_DER 13
 int righTatamiRead;
 int leftTatamiRead;
-#define BORDE_TATAMI 300
+#define FINAL_TAMAMI 2000
 
-//Variables y constantes LDR
-#define PIN_SENSOR_LDR 23
-#define MONTADO 100
-int ldr;
+//Variables y constantes para los sensores de LDR
+#define PIN_SENSOR_LDR_IZQ 26
+#define PIN_SENSOR_LDR_DER 32
+#define TE_MONTASTE 2000
+int righLdrRead;
+int leftLdrRead;
 
 //Variables y constantes para los sensores de distancia
-#define PIN_SENSOR_DISTANCIA_DERECHO 27
-#define PIN_SENSOR_DISTANCIA_IZQUIERDO 35
-#define RIVAL 40
+#define PIN_SENSOR_DISTANCIA_DERECHO 35
+#define PIN_SENSOR_DISTANCIA_IZQUIERDO 27
+#define RIVAL 70
 int distSharpRigh;
 int distSharpLeft;
 
 // Variables y constantes para los motores
-#define PIN_RIGHT_ENGINE_IN1 26
-#define PIN_RIGHT_ENGINE_IN2 17
-#define PIN_LEFT_ENGINE_IN1 17
-#define PIN_LEFT_ENGINE_IN2 16
+#define PIN_RIGHT_ENGINE_IN1 21
+#define PIN_RIGHT_ENGINE_IN2 19
+#define PIN_LEFT_ENGINE_IN1 22
+#define PIN_LEFT_ENGINE_IN2 23
 #define PWM_CHANNEL_RIGHT_IN1 1
 #define PWM_CHANNEL_RIGHT_IN2 2
 #define PWM_CHANNEL_LEFT_IN1 3
 #define PWM_CHANNEL_LEFT_IN2 4
-#define SEARCH_SPEED 65// 12 volt 170
+#define SEARCH_SPEED 130// 12 volt 170
 #define ATTACK_SPEED_LDR 255// 12 volt 255
-#define ATTACK_SPEED 200// 12 volt 220
+#define ATTACK_SPEED 180// 12 volt 220
 #define STRONG_ATTACK_SPEED 210
 #define ATTACK_SPEED_AGGRESSIVE 240// 12 volt 235
 #define AVERAGE_SPEED 100// 12 volt 200
@@ -80,15 +79,13 @@ int tickTurn;
 
 
 //Pines para los botones y buzzer
-#define PIN_BUTTON 23
+#define PIN_BUTTON 18
 bool lec;
 bool flank;
 unsigned long currentTimeButton = 0;
 #define TICK_START 1000
-#define BUZZER 18
+#define BUZZER 16
 //<------------------------------------------------------------------------------------------------------------->//
-Adafruit_SSD1306 oled(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
-
 IEngine *rightEngine = new Driver_DRV8825(PIN_RIGHT_ENGINE_IN1, PIN_RIGHT_ENGINE_IN2, PWM_CHANNEL_RIGHT_IN1, PWM_CHANNEL_RIGHT_IN2);
 IEngine *leftEngine = new Driver_DRV8825(PIN_LEFT_ENGINE_IN1, PIN_LEFT_ENGINE_IN2, PWM_CHANNEL_LEFT_IN1, PWM_CHANNEL_LEFT_IN2);
 EngineController *Ryo = new EngineController(rightEngine, leftEngine);
@@ -96,12 +93,13 @@ EngineController *Ryo = new EngineController(rightEngine, leftEngine);
 AnalogSensor *rightTatami = new AnalogSensor(PIN_SENSOR_TATAMI_DER);
 AnalogSensor *LeftTatami = new AnalogSensor(PIN_SENSOR_TATAMI_IZQ);
 
+AnalogSensor *rightLdr = new AnalogSensor(PIN_SENSOR_LDR_DER);
+AnalogSensor *LeftLdr = new AnalogSensor(PIN_SENSOR_LDR_IZQ);
+
 Isensor *sharpRight = new Sharp_GP2Y0A02(PIN_SENSOR_DISTANCIA_DERECHO);
 Isensor *sharpLeft = new Sharp_GP2Y0A02(PIN_SENSOR_DISTANCIA_IZQUIERDO);
 
-Button_pullup *start = new  Button(PIN_BUTTON);
-
-AnalogSensor *ldrSensor = new AnalogSensor(PIN_SENSOR_LDR);
+Boton *start = new  Boton(PIN_BUTTON);
 
 Adafruit_NeoPixel leds(NUM_LEDS, PIN_LEDS, NEO_RGB + NEO_KHZ800);
 //<------------------------------------------------------------------------------------------------------------->//
@@ -117,18 +115,6 @@ void printSharp()
     SerialBT.println(distSharpLeft);
   }
 }
-
-//Funciones para imprimir las lecturas de los sensores por el serial Bluetooth
-void printLdr()
-{
-  if (millis() > currentTimeLdr + TICK_DEBUG_LDR)
-  {
-    currentTimeLdr = millis();
-    SerialBT.print("Ldr: ");
-    SerialBT.println(ldr);
-  }
-}
-
 //Funcion para imprimir la lectura de los sensores de tatami en el puerto Bluetooth
 void printTatami()
 {
@@ -142,6 +128,19 @@ void printTatami()
     SerialBT.println(leftTatamiRead);
   }
 }
+//Funcion para imprimir la lectura de los sensores de Ldr en el puerto Bluetooth
+void printLdr()
+{
+  if (millis() > currentTimeLdr + TICK_DEBUG_LDR)
+  {
+    currentTimeLdr = millis();
+    SerialBT.print("Right Ldr: ");
+    SerialBT.print(righLdrRead);
+    SerialBT.print("  //  ");
+    SerialBT.print("Left Ldr: ");
+    SerialBT.println(leftLdrRead);
+  }
+}
 //<------------------------------------------------------------------------------------------------------------->//
 //Funcion para la lectura de los sensores
 void sensorsReading()
@@ -150,7 +149,8 @@ void sensorsReading()
     distSharpLeft = sharpLeft->SensorRead();
     righTatamiRead = rightTatami->SensorRead();
     leftTatamiRead = LeftTatami->SensorRead();
-    ldr = ldrSensor->SensorRead();
+    righLdrRead = rightLdr->SensorRead();
+    leftLdrRead = LeftLdr->SensorRead();
   }
 //<------------------------------------------------------------------------------------------------------------->//
 //Con el enum reemplazamos los casos de la maquina de estado por palabras descriptivas para mejor interpretacion del codigo
@@ -182,7 +182,7 @@ void Passive()
   {
     case STANDBY_PASSIVE:
     {
-    oled.clearDisplay(); 
+    leds.clear();
     leds.setPixelColor(1, leds.Color(150,150,150));
     leds.show();
     Ryo->Stop();
@@ -191,7 +191,7 @@ void Passive()
       leds.clear();
       leds.show();
       Ryo->Stop();
-      delay(4900);
+      delay(5000);
       Ryo->Right(ATTACK_SPEED, ATTACK_SPEED);
       delay(tickTurn);
       passive = SEARCH_PASSIVE;
@@ -202,17 +202,18 @@ void Passive()
     case SEARCH_PASSIVE:
     {
       Ryo->Right(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) passive = TATAMI_LIMIT_PASSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) passive = TURN_RIGHT_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) passive = TURN_LEFT_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) passive = ATTACK_PASSIVE;
+      
       break;    
     }
 
     case TURN_RIGHT_PASSIVE:
     {
       Ryo->Right(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) passive = TATAMI_LIMIT_PASSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) passive = SEARCH_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) passive = TURN_LEFT_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) passive = ATTACK_PASSIVE;
@@ -222,7 +223,7 @@ void Passive()
     case TURN_LEFT_PASSIVE:
     {
       Ryo->Left(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) passive = TATAMI_LIMIT_PASSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) passive = SEARCH_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) passive = TURN_RIGHT_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) passive = ATTACK_PASSIVE;
@@ -231,15 +232,16 @@ void Passive()
 
     case ATTACK_PASSIVE:
     {
-      if(distSharpRigh <= 10 && distSharpLeft <= 10)
+      Ryo->Stop();
+      if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL)
       {
-        Ryo->Forward(ATTACK_SPEED_LDR, ATTACK_SPEED_LDR);
-        if(leftTatamiRead < 250 || righTatamiRead < 250) passive = TATAMI_LIMIT_PASSIVE;
+        if(leftLdrRead < TE_MONTASTE || righLdrRead < TE_MONTASTE) Ryo->Forward(ATTACK_SPEED_LDR, ATTACK_SPEED_LDR);
+        if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       }
 
       else 
       {
-        Ryo->Stop();
+        
         if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) passive = SEARCH_PASSIVE;
         if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) passive = TURN_RIGHT_PASSIVE;
         if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) passive = TURN_LEFT_PASSIVE;
@@ -249,10 +251,10 @@ void Passive()
 
     case TATAMI_LIMIT_PASSIVE: 
     {
-    Ryo->Backward(AVERAGE_SPEED, AVERAGE_SPEED);
-    delay(300);
-    if(leftTatamiRead > 250 && righTatamiRead > 250) passive = SEARCH_PASSIVE;
-    break;
+      Ryo->Backward(AVERAGE_SPEED, AVERAGE_SPEED);
+      delay(400);
+      if(leftTatamiRead > FINAL_TAMAMI && righTatamiRead > FINAL_TAMAMI) passive = SEARCH_PASSIVE;
+      break;
     }
   }
 }
@@ -297,7 +299,7 @@ void SemiPassive()
     case SEARCH_SEMI_PASSIVE:
     {
       Ryo->Right(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) semiPassive = TURN_RIGHT_SEMI_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) semiPassive = TURN_LEFT_SEMI_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) semiPassive = ATTACK_SEMI_PASSIVE;
@@ -308,7 +310,7 @@ void SemiPassive()
       if(distSharpRigh <= 10 && distSharpLeft <= 10)
       {
         Ryo->Forward(ATTACK_SPEED, ATTACK_SPEED);
-        if(leftTatamiRead < 250 || righTatamiRead < 250) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
+        if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
       }
       break;    
     }
@@ -316,14 +318,14 @@ void SemiPassive()
     case TURN_RIGHT_PASSIVE:
     {
       Ryo->Right(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) semiPassive = SEARCH_SEMI_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) semiPassive = TURN_LEFT_SEMI_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) semiPassive = ATTACK_SEMI_PASSIVE;
       if(distSharpRigh <= 10 && distSharpLeft <= 10)
       {
         Ryo->Forward(ATTACK_SPEED, ATTACK_SPEED);
-        if(leftTatamiRead < 250 || righTatamiRead < 250) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
+        if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
       }
       break;
     }
@@ -331,14 +333,14 @@ void SemiPassive()
     case TURN_LEFT_PASSIVE:
     {
       Ryo->Left(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) semiPassive = SEARCH_SEMI_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) semiPassive = TURN_RIGHT_SEMI_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) semiPassive = ATTACK_SEMI_PASSIVE;
       if(distSharpRigh <= 10 && distSharpLeft <= 10)
       {
         Ryo->Forward(ATTACK_SPEED, ATTACK_SPEED);
-        if(leftTatamiRead < 250 || righTatamiRead < 250) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
+        if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
       }
       break;
     }
@@ -348,7 +350,7 @@ void SemiPassive()
       if(distSharpRigh <= 10 && distSharpLeft <= 10)
       {
         Ryo->Forward(ATTACK_SPEED, ATTACK_SPEED);
-        if(leftTatamiRead < 250 || righTatamiRead < 250) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
+        if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiPassive = TATAMI_LIMIT_SEMI_PASSIVE;
       }
 
       else 
@@ -380,7 +382,7 @@ void SemiPassive()
     {
         Ryo->Backward(AVERAGE_SPEED, AVERAGE_SPEED);
         delay(300);
-    if(leftTatamiRead > 250 && righTatamiRead > 250) semiPassive = SEARCH_SEMI_PASSIVE;
+    if(leftTatamiRead > FINAL_TAMAMI && righTatamiRead > FINAL_TAMAMI) semiPassive = SEARCH_SEMI_PASSIVE;
     break;
     }
   }
@@ -424,7 +426,7 @@ void SemiAggressive()
     case SEARCH_SEMI_AGGRESSIVE:
     {
       Ryo->Right(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) semiAggressive = TATAMI_LIMIT_SEMI_AGGRESSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiAggressive = TATAMI_LIMIT_SEMI_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) semiAggressive = TURN_RIGHT_SEMI_AGGRESSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) semiAggressive = TURN_LEFT_SEMI_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) semiAggressive = ATTACK_SEMI_AGGRESSIVE; 
@@ -433,7 +435,7 @@ void SemiAggressive()
     case TURN_RIGHT_SEMI_AGGRESSIVE:
     {
       Ryo->Right(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) semiAggressive = TATAMI_LIMIT_SEMI_AGGRESSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiAggressive = TATAMI_LIMIT_SEMI_AGGRESSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) semiAggressive = SEARCH_SEMI_AGGRESSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) semiAggressive = TURN_LEFT_SEMI_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) semiAggressive = ATTACK_SEMI_AGGRESSIVE;
@@ -443,7 +445,7 @@ void SemiAggressive()
     case TURN_LEFT_SEMI_AGGRESSIVE:
     {
       Ryo->Left(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) semiAggressive = TATAMI_LIMIT_SEMI_AGGRESSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiAggressive = TATAMI_LIMIT_SEMI_AGGRESSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) semiAggressive = SEARCH_SEMI_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) semiAggressive = TURN_RIGHT_SEMI_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) semiAggressive = ATTACK_SEMI_AGGRESSIVE;
@@ -456,7 +458,7 @@ void SemiAggressive()
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) semiAggressive = SEARCH_SEMI_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) semiAggressive = TURN_RIGHT_SEMI_AGGRESSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) semiAggressive = TURN_LEFT_SEMI_AGGRESSIVE;
-      if(leftTatamiRead < 250 || righTatamiRead < 250) semiPassive = TATAMI_LIMIT_SEMI_AGGRESSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) semiPassive = TATAMI_LIMIT_SEMI_AGGRESSIVE;
       if(distSharpRigh > 15 && distSharpLeft > 15)
       {
         Ryo->Forward(STRONG_ATTACK_SPEED, STRONG_ATTACK_SPEED);
@@ -468,7 +470,7 @@ void SemiAggressive()
     {
       Ryo->Backward(AVERAGE_SPEED, AVERAGE_SPEED);
       delay(300);
-    if(leftTatamiRead > 250 && righTatamiRead > 250) semiAggressive = SEARCH_SEMI_AGGRESSIVE;
+    if(leftTatamiRead > FINAL_TAMAMI && righTatamiRead > FINAL_TAMAMI) semiAggressive = SEARCH_SEMI_AGGRESSIVE;
     break;
     }
   }
@@ -513,7 +515,7 @@ void Aggressive()
     case SEARCH_AGGRESSIVE:
     {
       Ryo->Right(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) aggressive = TATAMI_LIMIT_AGGRESSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) aggressive = TATAMI_LIMIT_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) aggressive = TURN_RIGHT_AGGRESSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) aggressive = TURN_LEFT_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) aggressive = ATTACK_AGGRESSIVE; 
@@ -522,17 +524,17 @@ void Aggressive()
     case TURN_RIGHT_AGGRESSIVE:
     {
       Ryo->Right(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) aggressive = TATAMI_LIMIT_AGGRESSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) aggressive = TATAMI_LIMIT_AGGRESSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) aggressive = SEARCH_AGGRESSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) aggressive = TURN_LEFT_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) aggressive = ATTACK_AGGRESSIVE;
       break;
     }
 
-    TURN_LEFT_AGGRESSIVE:
+    case TURN_LEFT_AGGRESSIVE:
     {
       Ryo->Left(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < 250 || righTatamiRead < 250) aggressive = TATAMI_LIMIT_AGGRESSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) aggressive = TATAMI_LIMIT_AGGRESSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) aggressive = SEARCH_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) aggressive = TURN_RIGHT_AGGRESSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) aggressive = ATTACK_AGGRESSIVE;
@@ -544,11 +546,11 @@ void Aggressive()
     {
         Ryo->Forward(ATTACK_SPEED_AGGRESSIVE, ATTACK_SPEED_AGGRESSIVE);
         if(distSharpRigh > RIVAL || distSharpLeft > RIVAL) aggressive = SEARCH_AGGRESSIVE;
-        if(leftTatamiRead < 250 || righTatamiRead < 250) aggressive = TATAMI_LIMIT_AGGRESSIVE;
+        if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) aggressive = TATAMI_LIMIT_AGGRESSIVE;
         if(distSharpRigh <= 10 && distSharpLeft <= 10) 
         {
           Ryo->Forward(ATTACK_SPEED_LDR, ATTACK_SPEED_LDR);
-          if(leftTatamiRead < 250 || righTatamiRead < 250) aggressive = TATAMI_LIMIT_AGGRESSIVE;
+          if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) aggressive = TATAMI_LIMIT_AGGRESSIVE;
         }
         break;
     }
@@ -557,7 +559,7 @@ void Aggressive()
     {
     Ryo->Backward(AVERAGE_SPEED, AVERAGE_SPEED);
     delay(300);
-    if(leftTatamiRead > 250 && righTatamiRead > 250) aggressive = SEARCH_AGGRESSIVE;
+    if(leftTatamiRead > FINAL_TAMAMI && righTatamiRead > FINAL_TAMAMI) aggressive = SEARCH_AGGRESSIVE;
     break;
     }
   }
@@ -748,7 +750,7 @@ void StrategiesMenu()
     }
     break;
   }
-  
+
   case PASSIVE_MENU:
   { 
     leds.clear();
@@ -918,4 +920,5 @@ void loop(){
   logicMovement();
   if(DEBUG_SHARP) printSharp();
   if(DEBUG_TATAMI) printTatami();
+  if(DEBUG_LDR) printLdr();
 }
