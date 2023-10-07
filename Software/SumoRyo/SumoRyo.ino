@@ -4,13 +4,13 @@
 #include <EngineController.h>
 #include <AnalogSensor.h>
 #include <DistanceSensors.h>
-#include <boton.h>
+#include <Button.h>
 
 //debug
-#define DEBUG_SHARP 1
-#define DEBUG_STATE 1
-#define DEBUG_LDR 1
-#define DEBUG_TATAMI 1
+#define DEBUG_SHARP 0
+#define DEBUG_STATE 0
+#define DEBUG_LDR 0
+#define DEBUG_TATAMI 0
 #define TICK_DEBUG_LDR 1000
 #define TICK_DEBUG_STRATEGY 1000
 #define TICK_DEBUG_TATAMI 1000
@@ -28,19 +28,19 @@ BluetoothSerial SerialBT;
 
 //Aro de led
 #define PIN_LEDS 17
-#define NUM_LEDS 8
+#define NUM_LEDS 9
 
 //Variables y constantes para los sensores de tatami
 #define PIN_SENSOR_TATAMI_IZQ 34
 #define PIN_SENSOR_TATAMI_DER 13
 int righTatamiRead;
 int leftTatamiRead;
-#define FINAL_TAMAMI 2000
+#define FINAL_TAMAMI 250
 
 //Variables y constantes para los sensores de LDR
 #define PIN_SENSOR_LDR_IZQ 26
 #define PIN_SENSOR_LDR_DER 32
-#define TE_MONTASTE 2000
+#define TE_MONTASTE 200
 int righLdrRead;
 int leftLdrRead;
 
@@ -99,7 +99,7 @@ AnalogSensor *LeftLdr = new AnalogSensor(PIN_SENSOR_LDR_IZQ);
 Isensor *sharpRight = new Sharp_GP2Y0A02(PIN_SENSOR_DISTANCIA_DERECHO);
 Isensor *sharpLeft = new Sharp_GP2Y0A02(PIN_SENSOR_DISTANCIA_IZQUIERDO);
 
-Boton *start = new  Boton(PIN_BUTTON);
+Button *start = new  Button(PIN_BUTTON);
 
 Adafruit_NeoPixel leds(NUM_LEDS, PIN_LEDS, NEO_RGB + NEO_KHZ800);
 //<------------------------------------------------------------------------------------------------------------->//
@@ -202,10 +202,10 @@ void Passive()
     case SEARCH_PASSIVE:
     {
       Ryo->Right(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) passive = TURN_RIGHT_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) passive = TURN_LEFT_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) passive = ATTACK_PASSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       
       break;    
     }
@@ -213,35 +213,37 @@ void Passive()
     case TURN_RIGHT_PASSIVE:
     {
       Ryo->Right(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) passive = SEARCH_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) passive = TURN_LEFT_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) passive = ATTACK_PASSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       break;
     }
 
     case TURN_LEFT_PASSIVE:
     {
       Ryo->Left(SEARCH_SPEED, SEARCH_SPEED);
-      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) passive = SEARCH_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) passive = TURN_RIGHT_PASSIVE;
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL) passive = ATTACK_PASSIVE;
+      if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       break;
     }
 
     case ATTACK_PASSIVE:
     {
       Ryo->Stop();
+
       if(distSharpRigh <= RIVAL && distSharpLeft <= RIVAL)
       {
-        if(leftLdrRead < TE_MONTASTE || righLdrRead < TE_MONTASTE) Ryo->Forward(ATTACK_SPEED_LDR, ATTACK_SPEED_LDR);
+        if(leftLdrRead <= TE_MONTASTE && righLdrRead > TE_MONTASTE ) Ryo->Forward(SEARCH_SPEED, SEARCH_SPEED - 20);
+        if(leftLdrRead > TE_MONTASTE && righLdrRead <= TE_MONTASTE ) Ryo->Forward(SEARCH_SPEED -20, SEARCH_SPEED);
+        if(leftLdrRead <= TE_MONTASTE && righLdrRead <= TE_MONTASTE) Ryo->Forward(ATTACK_SPEED_LDR, ATTACK_SPEED_LDR);
         if(leftTatamiRead < FINAL_TAMAMI || righTatamiRead < FINAL_TAMAMI) passive = TATAMI_LIMIT_PASSIVE;
       }
 
       else 
       {
-        
         if(distSharpRigh > RIVAL && distSharpLeft > RIVAL) passive = SEARCH_PASSIVE;
         if(distSharpRigh <= RIVAL && distSharpLeft > RIVAL) passive = TURN_RIGHT_PASSIVE;
         if(distSharpRigh > RIVAL && distSharpLeft <= RIVAL) passive = TURN_LEFT_PASSIVE;
@@ -596,7 +598,8 @@ void RepositioningMenu()
         lec = digitalRead(PIN_BUTTON);
         if(millis() > currentTimeButton + TICK_START)
         {
-          repositioningMenu = TURN_FRONT;
+          tickTurn = 0;
+          strategy = STRATEGIES_MENU;
         }
       }
       repositioningMenu = TURN_FRONT;
@@ -722,11 +725,11 @@ enum strategiesMenu
   SEMI_AGGRESSIVE_MENU,
   AGGRESSIVE_MENU,
 };
-int menu = MAIN_MENU;
+int strategiesMenu = MAIN_MENU;
 //Maquina de estados para navegar dentro del menu y seleccionar la estrategia
 void StrategiesMenu()
 {
-  switch (menu)
+  switch (strategiesMenu)
   {
   case MAIN_MENU:
   {
@@ -743,10 +746,10 @@ void StrategiesMenu()
         lec = digitalRead(PIN_BUTTON);
         if(millis() > currentTimeButton + TICK_START)
         {
-          menu = PASSIVE_MENU;
+          strategiesMenu = PASSIVE_MENU;
         }
       }
-      menu = PASSIVE_MENU;
+      strategiesMenu = PASSIVE_MENU;
     }
     break;
   }
@@ -776,7 +779,7 @@ void StrategiesMenu()
           strategy = PASSIVE;
         }
       }
-      menu = SEMI_PASSIVE_MENU;
+      strategiesMenu = SEMI_PASSIVE_MENU;
     }
     break;
   }
@@ -806,7 +809,7 @@ void StrategiesMenu()
           strategy = SEMI_PASSIVE;
         }
       }
-      menu = menu = SEMI_AGGRESSIVE_MENU;
+      strategiesMenu = SEMI_AGGRESSIVE_MENU;
     }
     break;
   }
@@ -832,7 +835,7 @@ void StrategiesMenu()
           strategy = SEMI_AGGRESSIVE;
         }
       }
-      menu = menu = AGGRESSIVE_MENU;
+      strategiesMenu = AGGRESSIVE_MENU;
     }
     break;
   }
@@ -861,7 +864,7 @@ void StrategiesMenu()
           strategy = AGGRESSIVE;
         }
       }
-      menu = menu = PASSIVE_MENU;
+      strategiesMenu = PASSIVE_MENU;
     }
     break;
   }
