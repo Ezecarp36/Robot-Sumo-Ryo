@@ -4,7 +4,7 @@
 #include <EngineController.h>
 #include <AnalogSensor.h>
 #include <DistanceSensors.h>
-#include <boton.h>
+#include <Button.h>
 
 //debug
 #define DEBUG_SHARP 1
@@ -47,7 +47,7 @@ int leftLdrRead;
 //Variables y constantes para los sensores de distancia
 #define PIN_SENSOR_DISTANCIA_DERECHO 35
 #define PIN_SENSOR_DISTANCIA_IZQUIERDO 27
-#define RIVAL 70
+#define RIVAL 60
 int distSharpRigh;
 int distSharpLeft;
 
@@ -60,11 +60,11 @@ int distSharpLeft;
 #define PWM_CHANNEL_RIGHT_IN2 2
 #define PWM_CHANNEL_LEFT_IN1 3
 #define PWM_CHANNEL_LEFT_IN2 4
-#define SEARCH_SPEED 130// 12 volt 170
+#define SEARCH_SPEED 80// 12 volt 170
 #define ATTACK_SPEED_LDR 255// 12 volt 255
-#define ATTACK_SPEED 180// 12 volt 220
+#define ATTACK_SPEED 255// 12 volt 220
 #define STRONG_ATTACK_SPEED 210
-#define ATTACK_SPEED_AGGRESSIVE 240// 12 volt 235
+#define ATTACK_SPEED_AGGRESSIVE 255// 12 volt 235
 #define AVERAGE_SPEED 100// 12 volt 200
 int slowAttack = 45; // 12 volt 120
 int lowAttackCont;
@@ -99,7 +99,7 @@ AnalogSensor *LeftLdr = new AnalogSensor(PIN_SENSOR_LDR_IZQ);
 Isensor *sharpRight = new Sharp_GP2Y0A02(PIN_SENSOR_DISTANCIA_DERECHO);
 Isensor *sharpLeft = new Sharp_GP2Y0A02(PIN_SENSOR_DISTANCIA_IZQUIERDO);
 
-Boton *start = new  Boton(PIN_BUTTON);
+Button *start = new  Button(PIN_BUTTON);
 
 Adafruit_NeoPixel leds(NUM_LEDS, PIN_LEDS, NEO_RGB + NEO_KHZ800);
 //<------------------------------------------------------------------------------------------------------------->//
@@ -163,7 +163,7 @@ enum strategy
   SEMI_AGGRESSIVE,
   AGGRESSIVE
 };
-int strategy = REPOSITIONING_MENU;
+int strategy = STRATEGIES_MENU;
 //<------------------------------------------------------------------------------------------------------------->//
 enum passive
 {
@@ -404,8 +404,6 @@ void SemiAggressive()
       leds.clear();
       leds.show();
       delay(5000);
-      Ryo->Right(ATTACK_SPEED_LDR, ATTACK_SPEED_LDR);
-      delay(tickTurn);
       semiAggressive = SEARCH_SEMI_AGGRESSIVE;
     } 
     break;
@@ -910,6 +908,7 @@ void setup()
 void loop(){ 
   sensorsReading();
   logicMovement();
+  //logicMovement();
   if(DEBUG_SHARP) printSharp();
   if(DEBUG_TATAMI) printTatami();
   if(DEBUG_LDR) printLdr();
