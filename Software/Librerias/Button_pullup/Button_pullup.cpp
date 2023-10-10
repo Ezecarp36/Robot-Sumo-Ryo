@@ -1,10 +1,10 @@
-#include "Button.h"
+#include "Button_pullup.h"
 
 Button::Button(int p)
 {
     pin = p;
 
-    pinMode(pin, INPUT_PULLDOWN);
+    pinMode(pin, INPUT_PULLUP);
 }
 
 void Button::SetFlank(bool f)

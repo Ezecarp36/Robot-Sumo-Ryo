@@ -1,8 +1,8 @@
-#ifndef _BUTTON_H
-#define _BUTTON_H
+#ifndef _BUTTON_PULLUP_H
+#define _BUTTON_PULLUP_H
 #include "Arduino.h"
 
-class Button
+class Button_pullup
 {
 private:
     int pin;
@@ -10,7 +10,7 @@ private:
     bool previousState = !flank;
 
 public:
-    Button(int p);
+    Button_pullup(int p);
     void SetFlank(bool f);
     bool GetIsPress();
 };
