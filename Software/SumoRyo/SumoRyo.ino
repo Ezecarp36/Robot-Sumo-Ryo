@@ -908,7 +908,6 @@ void setup()
 void loop(){ 
   sensorsReading();
   logicMovement();
-  //logicMovement();
   if(DEBUG_SHARP) printSharp();
   if(DEBUG_TATAMI) printTatami();
   if(DEBUG_LDR) printLdr();
