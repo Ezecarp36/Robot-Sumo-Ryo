@@ -163,7 +163,7 @@ enum strategy
   SEMI_AGGRESSIVE,
   AGGRESSIVE
 };
-int strategy = STRATEGIES_MENU;
+int strategy = REPOSITIONING_MENU;
 //<------------------------------------------------------------------------------------------------------------->//
 enum passive
 {
@@ -183,7 +183,7 @@ void Passive()
     case STANDBY_PASSIVE:
     {
     leds.clear();
-    leds.setPixelColor(1, leds.Color(150,150,150));
+    leds.setPixelColor(1, leds.Color(0,0,255));
     leds.show();
     Ryo->Stop();
     if (start->GetIsPress())
@@ -280,10 +280,9 @@ void SemiPassive()
     case STANDBY_SEMI_PASSIVE:
     {
     leds.clear();
-    leds.setPixelColor(1, leds.Color(150,150,150));      
-    leds.setPixelColor(2, leds.Color(150,150,150));
+    leds.setPixelColor(1, leds.Color(0,0,255));      
+    leds.setPixelColor(2, leds.Color(0,0,255));
     leds.show();
-    Ryo->Stop();
     Ryo->Stop();
     if (start->GetIsPress())
     {
@@ -394,9 +393,9 @@ void SemiAggressive()
     case STANDBY_SEMI_AGGRESSIVE:
     {
     leds.clear();
-    leds.setPixelColor(1, leds.Color(150,150,150));      
-    leds.setPixelColor(2, leds.Color(150,150,150));
-    leds.setPixelColor(3, leds.Color(150,150,150));
+    leds.setPixelColor(1, leds.Color(0,0,255));      
+    leds.setPixelColor(2, leds.Color(0,0,255));
+    leds.setPixelColor(3, leds.Color(0,0,255));
     leds.show();
     Ryo->Stop();
     if (start->GetIsPress())
@@ -481,10 +480,10 @@ void Aggressive()
     case STANDBY_AGGRESSIVE:
     {
     leds.clear();
-    leds.setPixelColor(1, leds.Color(150,150,150));      
-    leds.setPixelColor(2, leds.Color(150,150,150));
-    leds.setPixelColor(3, leds.Color(150,150,150));
-    leds.setPixelColor(4, leds.Color(150,150,150));
+    leds.setPixelColor(1, leds.Color(0,0,255));      
+    leds.setPixelColor(2, leds.Color(0,0,255));
+    leds.setPixelColor(3, leds.Color(0,0,255));
+    leds.setPixelColor(4, leds.Color(0,0,255));
 
     leds.show();
     Ryo->Stop();
@@ -573,7 +572,10 @@ void RepositioningMenu()
   case TURN_MAIN_MENU:
   {
     leds.clear();
-    leds.setPixelColor(1, leds.Color(0,150,0));
+    for (int i = 0; i < 1; i++) 
+    {
+      leds.setPixelColor(i, leds.Color(255,0,0));
+    }
     leds.show();
     flank = start->GetIsPress();
     if(flank)
@@ -595,10 +597,12 @@ void RepositioningMenu()
   }
   case TURN_FRONT:
   {
-      leds.clear();
-      leds.setPixelColor(1, leds.Color(150,0,0));
-      leds.setPixelColor(2, leds.Color(150,0,0));
-      leds.show();
+    leds.clear();
+    for (int i = 0; i < 2; i++) 
+    {
+      leds.setPixelColor(i, leds.Color(255,0,0));
+    }
+    leds.show();
     flank = start->GetIsPress();
     if(flank)
     {
@@ -620,10 +624,10 @@ void RepositioningMenu()
   case TURN_SIDE:
   {
     leds.clear();
-    leds.setPixelColor(1, leds.Color(0,150,0));
-    leds.setPixelColor(2, leds.Color(0,150,0));
-    leds.setPixelColor(3, leds.Color(0,150,0));
-    leds.setPixelColor(4, leds.Color(0,150,0));
+    for (int i = 0; i < 4; i++) 
+    {
+      leds.setPixelColor(i, leds.Color(255,0,0));
+    }
     leds.show();
     flank = start->GetIsPress();
     if(flank)
@@ -646,12 +650,10 @@ void RepositioningMenu()
   case SHORT_BACK_TURN:
   {
     leds.clear();
-    leds.setPixelColor(1, leds.Color(0,0,150));
-    leds.setPixelColor(2, leds.Color(0,0,150));
-    leds.setPixelColor(3, leds.Color(0,0,150));
-    leds.setPixelColor(4, leds.Color(0,0,150));
-    leds.setPixelColor(5, leds.Color(0,0,150));
-    leds.setPixelColor(6, leds.Color(0,0,150));
+    for (int i = 0; i < 6; i++) 
+    {
+      leds.setPixelColor(i, leds.Color(255,0,0));
+    }
     leds.show();
     flank = start->GetIsPress();
     if(flank)
@@ -674,14 +676,10 @@ void RepositioningMenu()
   case LONG_BACK_TURN:
   {
     leds.clear();
-    leds.setPixelColor(1, leds.Color(150,150,0));
-    leds.setPixelColor(2, leds.Color(150,150,0));
-    leds.setPixelColor(3, leds.Color(150,150,0));
-    leds.setPixelColor(4, leds.Color(150,150,0));
-    leds.setPixelColor(5, leds.Color(150,150,0));
-    leds.setPixelColor(6, leds.Color(150,150,0));
-    leds.setPixelColor(7, leds.Color(150,150,0));
-    leds.setPixelColor(8, leds.Color(150,150,0));
+    for (int i = 0; i < 8; i++) 
+    {
+      leds.setPixelColor(i, leds.Color(255,0,0));
+    }
     leds.show();
     flank = start->GetIsPress();
     if(flank)
@@ -721,7 +719,7 @@ void StrategiesMenu()
   case MAIN_MENU:
   {
     leds.clear();
-    leds.setPixelColor(1, leds.Color(0,0,200));
+    leds.setPixelColor(1, leds.Color(0,0,255));
     leds.show();
     flank = start->GetIsPress();
     if(flank)
@@ -744,14 +742,10 @@ void StrategiesMenu()
   case PASSIVE_MENU:
   { 
     leds.clear();
-    leds.setPixelColor(1, leds.Color(150,0,0));
-    leds.setPixelColor(2, leds.Color(150,0,0));
-    leds.setPixelColor(3, leds.Color(150,0,0));
-    leds.setPixelColor(4, leds.Color(150,0,0));
-    leds.setPixelColor(5, leds.Color(150,0,0));
-    leds.setPixelColor(6, leds.Color(150,0,0));
-    leds.setPixelColor(7, leds.Color(150,0,0));
-    leds.setPixelColor(8, leds.Color(150,0,0));
+    for (int i = NUM_LEDS; i < 2; i++) 
+    {
+      leds.setPixelColor(i, leds.Color(0,0,255));
+    }
     leds.show();
     flank = start->GetIsPress();
     if(flank)
@@ -774,15 +768,11 @@ void StrategiesMenu()
   case SEMI_PASSIVE_MENU:
   { 
     leds.clear();
-    leds.setPixelColor(1, leds.Color(0,0,150));
-    leds.setPixelColor(2, leds.Color(0,0,150));
-    leds.setPixelColor(3, leds.Color(0,0,150));
-    leds.setPixelColor(4, leds.Color(0,0,150));
-    leds.setPixelColor(5, leds.Color(0,0,150));
-    leds.setPixelColor(6, leds.Color(0,0,150));
-    leds.setPixelColor(7, leds.Color(0,0,150));
-    leds.setPixelColor(8, leds.Color(0,0,150));
-    leds.show(); 
+    for (int i = NUM_LEDS; i < 2; i++) 
+    {
+      leds.setPixelColor(i, leds.Color(0,255,0));
+    }
+    leds.show();
     flank = start->GetIsPress();
     if(flank)
     {
@@ -804,11 +794,11 @@ void StrategiesMenu()
   case SEMI_AGGRESSIVE_MENU:
   { 
     leds.clear();
-    leds.setPixelColor(1, leds.Color(0,150,0));
-    leds.setPixelColor(2, leds.Color(0,150,0));
-    leds.setPixelColor(3, leds.Color(0,150,0));
-    leds.setPixelColor(4, leds.Color(0,150,0));
-    leds.show(); 
+    for (int i = NUM_LEDS; i < 2; i++) 
+    {
+      leds.setPixelColor(i, leds.Color(255,255,0));
+    }
+    leds.show();
     flank = start->GetIsPress();
     if(flank)
     {
@@ -830,14 +820,11 @@ void StrategiesMenu()
   case AGGRESSIVE_MENU:
   {
     leds.clear();
-    leds.setPixelColor(1, leds.Color(0,150,0));
-    leds.setPixelColor(2, leds.Color(0,150,0));
-    leds.setPixelColor(3, leds.Color(0,150,0));
-    leds.setPixelColor(4, leds.Color(0,150,0));
-    leds.setPixelColor(5, leds.Color(0,150,0));
-    leds.setPixelColor(6, leds.Color(0,150,0));
-    leds.setPixelColor(7, leds.Color(0,150,0));
-    leds.setPixelColor(8, leds.Color(0,150,0));
+    for (int i = NUM_LEDS; i < 2; i++) 
+    {
+      leds.setPixelColor(i, leds.Color(255,0,0));
+    }
+    leds.show();
     flank = start->GetIsPress();
     if(flank)
     {
